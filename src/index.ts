@@ -1,5 +1,6 @@
 import Common from 'ts_common_utils/lib/Common'
 import Timer from 'ts_common_utils/lib/Timer'
+import disableScroll from 'disable-scroll'
 var parseColor = require('parse-color')
 
 export default {
@@ -50,7 +51,7 @@ export class FullscreenView {
 	private div1:HTMLElement
 	private div2:HTMLElement
 	private contentHolderDiv:HTMLElement
-
+	
 	private startBounds:DOMRect
 	private content:HTMLElement
 	private originalContentElement:HTMLElement
@@ -99,11 +100,11 @@ export class FullscreenView {
 		}
 
 		this.div1.addEventListener('fullscreenchange', () => this.onFullScreenChange(this))
-		window.addEventListener('resize', () => this.onResize(this))
+		window.addEventListener('resize', () => this.onResize())
 	}
-	focusElement(content:HTMLElement, options:FullscreenViewOptions | any | null = null){
+	focusElement(content:HTMLElement, options:FullscreenViewOptions | any | null = null):boolean{
 		if(this.visible){
-			return
+			return false
 		}
 
 		if(options){
@@ -121,22 +122,23 @@ export class FullscreenView {
 			this.contentHolderDiv.innerHTML = ''
 			this.content = content
 		}
-		this.startBounds = this.content.getBoundingClientRect()
+		this.startBounds = content.getBoundingClientRect()
 		this.contentsDefaultParent = content.parentElement as HTMLElement
 		this.contentHolderDiv.appendChild(this.content)
 		this.originalContentElement = content
 		this.toggleVisibility(true)
+		return true
 	}
 	private toggleVisibility(on:boolean){
 		if(on){
 			document.body.appendChild(this.div1)
 			if(this.mode == FullscreenViewModes.FULL_WINDOW){
 				this.visible = true
-				document.documentElement.style.overflow = "hidden"
+				disableScroll.on()//document.documentElement.style.overflow = "hidden"
 				if(this.currentOptions.animate){
 					this.animate()
 				}else{
-					this.onResize(this)
+					this.onResize()
 				}
 			}else if(this.mode == FullscreenViewModes.FULL_SCREEN){
 				this.goFullScreen()
@@ -152,7 +154,7 @@ export class FullscreenView {
 	private cleanup(){
 		this.visible = false
 		if(this.mode == FullscreenViewModes.FULL_WINDOW){
-			document.documentElement.style.overflow = ""
+			disableScroll.off()//document.documentElement.style.overflow = ""
 		}else if(this.mode == FullscreenViewModes.FULL_SCREEN){
 		}
 		document.body.removeChild(this.div1)
@@ -162,7 +164,6 @@ export class FullscreenView {
 	}
 	private animate(reverse = false){
 		var _this = this
-		var totalTime = 1
 		var timer = new Timer(0.3)
 		
 		var startX = (this.startBounds.x + this.startBounds.width / 2) - this.div1.clientWidth / 2
@@ -182,7 +183,7 @@ export class FullscreenView {
 			if(reverse)
 				prog = 1 - prog
 			
-			var progress = _this.currentOptions.animationProgrssionFn(prog / totalTime)
+			var progress = _this.currentOptions.animationProgrssionFn(prog)
 			
 			var opacity = startOpacity + (endOpacity - startOpacity) * progress
 			if(_this.currentOptions.clone){
@@ -196,11 +197,18 @@ export class FullscreenView {
 			_this.animationScale = startScale + (endScale - startScale) * progress
 			_this.offsetX = startX + (endX - startX) * progress
 			_this.offsetY = startY + (endY - startY) * progress
-			_this.onResize(_this)
+			//window.dispatchEvent(new Event('resize'))
+			_this.onResize()
 			
 			if(timer.ended){
 				if(reverse){
 					_this.cleanup()
+					if(_this.currentOptions.clone){
+						_this.div1.style.opacity = '1'
+					}else{
+						_this.currentOptions.backButton.style.opacity = '1'
+						_this.div1.style.backgroundColor = `rgba(${startColor[0]},${startColor[1]},${startColor[2]},${startColor[3]})`
+					}
 				}
 				return true
 			}
@@ -228,18 +236,18 @@ export class FullscreenView {
 			_this.toggleVisibility(_this.visible)
 		}
 	}
-	private onResize(_this:FullscreenView){
-		if(!_this.visible){
+	private onResize(){
+		if(!this.visible){
 			return
 		}
-		//console.log('fdhdh')
-		var newScale = _this.getEndScaleToFillParent()
-		_this.contentHolderDiv.style.transform = `scale(${newScale}) translate(${_this.offsetX / newScale}px, ${_this.offsetY / newScale}px)`
+		var newScale = 1
+		newScale = this.getEndScaleToFillParent()
+		this.contentHolderDiv.style.transform = `scale(${newScale}) translate(${this.offsetX / newScale}px, ${this.offsetY / newScale}px)`
 	}
 	private getEndScaleToFillParent(){
-		var newScale = this.div1.clientWidth / this.content.clientWidth
-		if(newScale * this.content.clientHeight > this.div1.clientHeight){
-			newScale /= (newScale * this.content.clientHeight) / this.div1.clientHeight
+		var newScale = this.div1.clientWidth / this.startBounds.width
+		if(newScale * this.startBounds.height > this.div1.clientHeight){
+			newScale /= (newScale * this.startBounds.height) / this.div1.clientHeight
 		}
 		newScale *= this.currentOptions.scale * this.animationScale
 		return newScale
