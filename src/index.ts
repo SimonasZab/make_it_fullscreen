@@ -164,7 +164,7 @@ export class FullscreenView {
 	}
 	private animate(reverse = false){
 		var _this = this
-		var timer = new Timer(0.3)
+		var timer = new Timer(0.5)
 		
 		var startX = (this.startBounds.x + this.startBounds.width / 2) - this.div1.clientWidth / 2
 		var startY = (this.startBounds.y + this.startBounds.height / 2) - this.div1.clientHeight / 2
