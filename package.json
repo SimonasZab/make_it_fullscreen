@@ -1,6 +1,6 @@
 {
   "name": "make_it_fullscreen",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Focus any element to fullscreen",
   "type": "module",
   "main": "lib/index.js",
