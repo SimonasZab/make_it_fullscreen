@@ -1,7 +1,7 @@
 # Make it fullscreen
 Focus any html element to fullscreen.
 
-[![Demo CountPages alpha](https://share.gifyoutube.com/jZy4nP.gif)](https://www.youtube.com/watch?v=H8vMoNV_11c)
+[![showcase](https://gifs.com/gif/make-it-fulscreen-showcase-jZy4nP)](https://www.youtube.com/watch?v=H8vMoNV_11c)
 ## Features
 - True fullscreen or focus in window modes;
 - Animated transition.
